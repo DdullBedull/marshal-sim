@@ -49,9 +49,16 @@
   <div id="status"></div>
   <div id="results"></div>
 </div>
-<div id="map"></div>
+<div id="main">
+  <div id="map"></div>
+  <div id="charts" hidden>
+    <div class="chart-box"><canvas id="lineChart"></canvas></div>
+    <div class="chart-box"><canvas id="heatmap"></canvas></div>
+  </div>
+</div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <script src="/static/app.js"></script>
 </body>
 </html>

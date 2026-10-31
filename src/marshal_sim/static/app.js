@@ -272,10 +272,179 @@ $("run").addEventListener("click", async () => {
     if (!res.ok) throw new Error(formatError(body.detail));
     window.lastResult = body;
     renderResults(body);
+    showCharts(body);
     setStatus(`Selesai: ${body.n_runners} pelari disimulasikan.`);
   } catch (err) {
     setStatus(err.message, true);
   } finally {
     $("run").disabled = false;
+  }
+});
+
+// ---------- grafik dan heatmap ----------
+
+let chart = null;
+
+const LINE_COLORS = ["#2563eb", "#dc2626", "#16a34a", "#9333ea", "#ea580c", "#0891b2", "#ca8a04", "#db2777"];
+const INFERNO = [[0, 0, 4], [87, 16, 110], [188, 55, 84], [249, 142, 9], [252, 255, 164]];
+
+function colorAt(v) {
+  const x = Math.min(Math.max(v, 0), 1) * (INFERNO.length - 1);
+  const i = Math.min(Math.floor(x), INFERNO.length - 2);
+  const f = x - i;
+  return INFERNO[i].map((c, k) => Math.round(c + (INFERNO[i + 1][k] - c) * f));
+}
+
+function niceStep(range, target) {
+  const raw = range / target;
+  const p = Math.pow(10, Math.floor(Math.log10(raw)));
+  const f = raw / p;
+  return (f < 1.5 ? 1 : f < 3.5 ? 2 : f < 7.5 ? 5 : 10) * p;
+}
+
+function showCharts(r) {
+  const panel = $("charts");
+  if (!r.recommendations.length) {
+    panel.hidden = true;
+    map.invalidateSize();
+    return;
+  }
+  panel.hidden = false;
+  map.invalidateSize();
+  drawChart(r);
+  drawHeatmap(r);
+}
+
+function drawChart(r) {
+  const { density, times_min, step_km } = r.sim;
+  const datasets = r.recommendations.map((p, i) => {
+    const b = Math.min(Math.floor(p.km / step_km), density[0].length - 1);
+    const color = LINE_COLORS[i % LINE_COLORS.length];
+    return {
+      label: `${p.pos} (km ${p.km})`,
+      data: density.map((row) => row[b]),
+      borderColor: color,
+      backgroundColor: color,
+      borderWidth: 2,
+      pointRadius: 0,
+      tension: 0.2,
+    };
+  });
+
+  if (chart) chart.destroy();
+  chart = new Chart($("lineChart"), {
+    type: "line",
+    data: { labels: times_min, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      interaction: { mode: "nearest", intersect: false },
+      plugins: {
+        title: { display: true, text: "Kepadatan per pos" },
+        legend: { position: "bottom", labels: { boxWidth: 12 } },
+      },
+      scales: {
+        x: { title: { display: true, text: "Menit sejak start" }, ticks: { maxTicksLimit: 10 } },
+        y: { title: { display: true, text: "Pelari/km" }, beginAtZero: true },
+      },
+    },
+  });
+}
+
+function drawHeatmap(r) {
+  const canvas = $("heatmap");
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.clientWidth, H = canvas.clientHeight;
+  if (!W || !H) return;
+  canvas.width = Math.round(W * dpr);
+  canvas.height = Math.round(H * dpr);
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+
+  const { density, times_min, step_km } = r.sim;
+  const nT = density.length, nB = density[0].length;
+  const dt = nT > 1 ? times_min[1] - times_min[0] : 1;
+  const xMax = nB * step_km, yMax = nT * dt;
+  const maxV = Math.max(...density.map((row) => Math.max(...row))) || 1;
+
+  // grid kepadatan digambar 1 piksel per sel, lalu di-scale ke area plot
+  const off = document.createElement("canvas");
+  off.width = nB;
+  off.height = nT;
+  const octx = off.getContext("2d");
+  const img = octx.createImageData(nB, nT);
+  for (let t = 0; t < nT; t++) {
+    for (let b = 0; b < nB; b++) {
+      const [rr, g, bl] = colorAt(density[t][b] / maxV);
+      const k = ((nT - 1 - t) * nB + b) * 4;   // waktu 0 ada di bawah
+      img.data[k] = rr;
+      img.data[k + 1] = g;
+      img.data[k + 2] = bl;
+      img.data[k + 3] = 255;
+    }
+  }
+  octx.putImageData(img, 0, 0);
+
+  const m = { l: 46, r: 16, t: 28, b: 40 };
+  const pw = W - m.l - m.r, ph = H - m.t - m.b;
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(off, m.l, m.t, pw, ph);
+
+  // garis dan nama pos
+  ctx.strokeStyle = "rgba(255,255,255,0.85)";
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4, 3]);
+  r.recommendations.forEach((p) => {
+    const x = m.l + (p.km / xMax) * pw;
+    ctx.beginPath();
+    ctx.moveTo(x, m.t);
+    ctx.lineTo(x, m.t + ph);
+    ctx.stroke();
+  });
+  ctx.setLineDash([]);
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "11px system-ui, sans-serif";
+  ctx.textAlign = "right";
+  r.recommendations.forEach((p) => {
+    const x = m.l + (p.km / xMax) * pw;
+    ctx.save();
+    ctx.translate(x - 3, m.t + 4);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText(p.pos, 0, 0);
+    ctx.restore();
+  });
+
+  // sumbu
+  ctx.fillStyle = "#1d2433";
+  ctx.font = "12px system-ui, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText(`Heatmap kepadatan (maks ${Math.round(maxV)} pelari/km)`, m.l + pw / 2, 16);
+  ctx.fillText("Jarak dari start (km)", m.l + pw / 2, H - 6);
+
+  const xs = niceStep(xMax, 6);
+  for (let i = 0; i * xs <= xMax + 1e-9; i++) {
+    ctx.fillText(+(i * xs).toFixed(2), m.l + ((i * xs) / xMax) * pw, m.t + ph + 15);
+  }
+
+  ctx.textAlign = "right";
+  const ys = niceStep(yMax, 5);
+  for (let i = 0; i * ys <= yMax + 1e-9; i++) {
+    ctx.fillText(+(i * ys).toFixed(2), m.l - 6, m.t + ph - ((i * ys) / yMax) * ph + 4);
+  }
+
+  ctx.save();
+  ctx.translate(12, m.t + ph / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.textAlign = "center";
+  ctx.fillText("Menit sejak start", 0, 0);
+  ctx.restore();
+}
+
+window.addEventListener("resize", () => {
+  if (window.lastResult && !$("charts").hidden) {
+    map.invalidateSize();
+    drawHeatmap(window.lastResult);
   }
 });

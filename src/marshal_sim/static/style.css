@@ -1,7 +1,12 @@
 * { box-sizing: border-box; }
 body { margin: 0; font-family: system-ui, sans-serif; font-size: 14px; color: #1d2433; display: flex; height: 100vh; }
 #sidebar { width: 400px; padding: 16px; overflow-y: auto; border-right: 1px solid #d8dce5; background: #f7f8fa; }
-#map { flex: 1; }
+#main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+#map { flex: 1; min-height: 200px; }
+#charts { height: 300px; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: minmax(0, 1fr); gap: 12px; padding: 12px; border-top: 1px solid #d8dce5; background: #fff; }
+#charts[hidden] { display: none; }
+.chart-box { position: relative; min-width: 0; min-height: 0; }
+#heatmap { width: 100%; height: 100%; display: block; }
 h1 { font-size: 18px; margin: 0 0 4px; }
 h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: #5a6376; margin: 20px 0 8px; }
 .sub { color: #5a6376; margin: 0 0 12px; }
