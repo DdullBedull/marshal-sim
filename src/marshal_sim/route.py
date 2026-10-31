@@ -26,9 +26,8 @@ def haversine_km(lat1, lon1, lat2, lon2):
     return 2 * EARTH_RADIUS_KM * np.arcsin(np.sqrt(a))
 
 
-def load_gpx(path: str) -> Route:
-    with open(path, encoding="utf-8") as f:
-        gpx = gpxpy.parse(f)
+def parse_gpx(xml_text: str) -> Route:
+    gpx = gpxpy.parse(xml_text)
 
     points = [
         (p.latitude, p.longitude)
@@ -43,3 +42,8 @@ def load_gpx(path: str) -> Route:
     steps = haversine_km(lat[:-1], lon[:-1], lat[1:], lon[1:])
     dist_km = np.concatenate(([0.0], np.cumsum(steps)))
     return Route(lat=lat, lon=lon, dist_km=dist_km)
+
+
+def load_gpx(path) -> Route:
+    with open(path, encoding="utf-8") as f:
+        return parse_gpx(f.read())
