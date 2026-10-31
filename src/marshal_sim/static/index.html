@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Marshal Sim</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div id="sidebar">
+  <h1>Marshal Sim</h1>
+  <p class="sub">Simulasi kepadatan pelari dan rekomendasi pos marshal.</p>
+
+  <h2>1. Rute</h2>
+  <label><span>File GPX</span><input type="file" id="gpx" accept=".gpx"></label>
+  <div id="routeInfo" class="hint">Belum ada rute.</div>
+
+  <h2>2. Peserta</h2>
+  <label><span>Nama kategori</span><input id="catName" value="4K"></label>
+  <div class="row">
+    <label><span>Jarak (km)</span><input id="distance" type="number" step="0.1" min="0.1" value="4"></label>
+    <label><span>Jumlah peserta</span><input id="count" type="number" min="1" max="20000" value="1000"></label>
+    <label><span>Pace rata-rata (mnt/km)</span><input id="paceMean" type="number" step="0.1" min="1" value="6"></label>
+    <label><span>Simpangan baku pace</span><input id="paceStd" type="number" step="0.1" min="0" value="1"></label>
+    <label><span>Offset start (mnt)</span><input id="startOffset" type="number" step="0.5" min="0" value="0"></label>
+    <label><span>Lama start (mnt)</span><input id="startSpread" type="number" step="0.5" min="0" value="3"></label>
+  </div>
+
+  <h2>3. Titik pos</h2>
+  <label><span>Tipe pos berikutnya</span>
+    <select id="pointType">
+      <option value="persimpangan">Persimpangan</option>
+      <option value="putar_balik">Putar balik</option>
+      <option value="water_station">Water station</option>
+      <option value="lurus">Ruas lurus</option>
+    </select>
+  </label>
+  <div class="hint">Klik di garis rute pada peta untuk menambah pos.</div>
+  <div id="pointList"></div>
+
+  <h2>4. Parameter</h2>
+  <div class="row">
+    <label><span>Kapasitas per marshal</span><input id="capacity" type="number" min="1" value="1500"></label>
+    <label><span>Seed acak</span><input id="seed" type="number" value="42"></label>
+  </div>
+
+  <button id="run" disabled>Jalankan Simulasi</button>
+  <div id="status"></div>
+  <div id="results"></div>
+</div>
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="/static/app.js"></script>
+</body>
+</html>

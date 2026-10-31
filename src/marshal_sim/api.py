@@ -1,7 +1,10 @@
 import json
+from pathlib import Path
 
 import numpy as np
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from gpxpy.gpx import GPXException
 from pydantic import ValidationError
 
@@ -13,6 +16,14 @@ from marshal_sim.schemas import SimConfig
 from marshal_sim.simulate import simulate_density
 
 app = FastAPI(title="Marshal Sim API")
+
+STATIC_DIR = Path(__file__).parent / "static"
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+
+@app.get("/", include_in_schema=False)
+def index():
+    return FileResponse(STATIC_DIR / "index.html")
 
 
 @app.get("/api/health")

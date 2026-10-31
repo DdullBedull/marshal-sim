@@ -52,3 +52,9 @@ def test_invalid_config_returns_422():
 def test_point_outside_route_returns_422():
     cfg = {**CONFIG, "points": [{"name": "X", "km": 99, "type": "lurus"}]}
     assert post(cfg).status_code == 422
+
+
+def test_index_page_served():
+    r = client.get("/")
+    assert r.status_code == 200
+    assert "Marshal" in r.text
