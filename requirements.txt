@@ -1,15 +1,20 @@
+colorama==0.4.6
 contourpy==1.4.0
 cycler==0.12.1
 fonttools==4.68.0
 gpxpy==1.6.2
+iniconfig==2.3.1
 kiwisolver==1.5.1
--e git+https://github.com/DdullBedull/marshal-sim.git@ab10a7401b7bfda0dd6e5206b6264e6930b047a6#egg=marshal_sim
+-e git+https://github.com/DdullBedull/marshal-sim.git@03b273d3875093cbac47c5bb7132201f64ed73a3#egg=marshal_sim
 matplotlib==3.11.2
 numpy==2.5.4
 packaging==26.3
 pandas==3.1.0
 pillow==13.0.0
+pluggy==1.7.0
+Pygments==2.21.0
 pyparsing==3.3.3
+pytest==9.2.0
 python-dateutil==3.0.0
 six==1.17.0
 tzdata==2026.6
