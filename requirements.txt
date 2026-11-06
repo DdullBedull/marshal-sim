@@ -15,7 +15,6 @@ httpx==0.28.1
 idna==3.20
 iniconfig==2.3.1
 kiwisolver==1.5.1
--e git+https://github.com/DdullBedull/marshal-sim.git@4d00b2e6c7f4296f0ddd78f43cc842b63f0b5203#egg=marshal_sim
 matplotlib==3.11.2
 numpy==2.5.4
 opentelemetry-api==1.45.2
